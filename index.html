@@ -11,364 +11,291 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;700;900&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
 <style>
-  /* ── Reset & base ── */
-  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+/* ── Reset ── */
+*, *::before, *::after {
+  margin: 0; padding: 0; box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
 
-  :root {
-    --brand-red:   #E30613;
-    --brand-dark:  #0a0a0f;
-    --brand-mid:   #14141f;
-    --brand-gold:  #FFD700;
-    --brand-white: #ffffff;
-    --brand-gray:  #1e1e2e;
-    /* safe-area padding for notched phones */
-    --sat: env(safe-area-inset-top,    0px);
-    --sar: env(safe-area-inset-right,  0px);
-    --sab: env(safe-area-inset-bottom, 0px);
-    --sal: env(safe-area-inset-left,   0px);
-  }
+:root {
+  --red:   #E30613;
+  --dark:  #0a0a0f;
+  --gold:  #FFD700;
+  --white: #ffffff;
+}
 
-  html {
-    height: -webkit-fill-available; /* iOS Safari full height */
-  }
+html, body {
+  width: 100%; height: 100%;
+}
 
-  body {
-    font-family: 'Exo 2', 'Segoe UI', Arial, sans-serif;
-    background: var(--brand-dark);
-    min-height: 100vh;
-    min-height: -webkit-fill-available;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-    position: relative;
-    /* respect notch */
-    padding-top:    var(--sat);
-    padding-right:  var(--sar);
-    padding-bottom: var(--sab);
-    padding-left:   var(--sal);
-    /* prevent pull-to-refresh bounce on iOS */
-    overscroll-behavior: none;
-  }
+body {
+  font-family: 'Exo 2', 'Segoe UI', Arial, sans-serif;
+  background: var(--dark);
+  /* EXACT CENTER — the only layout rule that matters */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+  overflow: hidden;
+  position: relative;
+  padding: env(safe-area-inset-top,0px) env(safe-area-inset-right,0px)
+           env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px);
+  overscroll-behavior: none;
+}
 
-  /* ── Animated background ── */
-  .bg-layer {
-    position: fixed; inset: 0; z-index: 0;
-    background:
-      radial-gradient(ellipse 80% 60% at 50% 0%,  rgba(227,6,19,0.18) 0%, transparent 70%),
-      radial-gradient(ellipse 60% 50% at 80% 100%, rgba(227,6,19,0.10) 0%, transparent 60%),
-      linear-gradient(160deg, #0a0a0f 0%, #14141f 50%, #0d0d18 100%);
-  }
-  .bg-grid {
-    position: fixed; inset: 0; z-index: 0;
-    background-image:
-      linear-gradient(rgba(227,6,19,0.06) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(227,6,19,0.06) 1px, transparent 1px);
-    background-size: 48px 48px;
-    animation: gridScroll 20s linear infinite;
-  }
-  @keyframes gridScroll { to { background-position: 48px 48px; } }
+/* ── Background layers ── */
+.bg-layer {
+  position: fixed; inset: 0; z-index: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 0%,  rgba(227,6,19,.18) 0%, transparent 70%),
+    radial-gradient(ellipse 60% 50% at 80% 100%, rgba(227,6,19,.10) 0%, transparent 60%),
+    linear-gradient(160deg, #0a0a0f 0%, #14141f 50%, #0d0d18 100%);
+}
+.bg-grid {
+  position: fixed; inset: 0; z-index: 0;
+  background-image:
+    linear-gradient(rgba(227,6,19,.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(227,6,19,.06) 1px, transparent 1px);
+  background-size: 48px 48px;
+  animation: gridMove 20s linear infinite;
+}
+@keyframes gridMove { to { background-position: 48px 48px; } }
 
-  .bg-orb {
-    position: fixed; border-radius: 50%;
-    filter: blur(80px); pointer-events: none; z-index: 0;
-    animation: orbFloat 8s ease-in-out infinite alternate;
-  }
-  .orb1 { width: 400px; height: 400px; background: rgba(227,6,19,0.12); top: -100px; left: -100px; }
-  .orb2 { width: 300px; height: 300px; background: rgba(227,6,19,0.08); bottom: -80px; right: -80px; animation-delay: -4s; }
-  @keyframes orbFloat { from { transform: translate(0,0) scale(1); } to { transform: translate(30px,20px) scale(1.1); } }
+.bg-orb {
+  position: fixed; border-radius: 50%;
+  filter: blur(80px); pointer-events: none; z-index: 0;
+  animation: orbDrift 8s ease-in-out infinite alternate;
+}
+.orb1 { width:400px; height:400px; background:rgba(227,6,19,.12); top:-100px; left:-100px; }
+.orb2 { width:300px; height:300px; background:rgba(227,6,19,.08); bottom:-80px; right:-80px; animation-delay:-4s; }
+@keyframes orbDrift { to { transform: translate(30px,20px) scale(1.1); } }
 
-  /* ── Game wrapper ── */
-  .game-wrap {
-    position: relative; z-index: 10;
-    display: flex; flex-direction: column; align-items: center;
-    gap: clamp(12px, 3vw, 24px);
-    padding: clamp(12px, 3vw, 24px);
-    width: 100%;
-    max-width: 600px;
-  }
+/* ── Game wrapper — column, centred ── */
+.game-wrap {
+  position: relative; z-index: 10;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: clamp(10px, 2.5vh, 22px);
+  padding: clamp(10px, 2vh, 20px);
+  width: 100%;
+}
 
-  /* ── Header ── */
-  .header { text-align: center; }
-  .header-brand {
-    font-family: 'Orbitron', 'Segoe UI', Arial, sans-serif;
-    font-size: clamp(1.2rem, 5vw, 2.2rem);
-    font-weight: 900;
-    color: var(--brand-white);
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    line-height: 1;
-  }
-  .header-brand span { color: var(--brand-red); }
-  .header-sub {
-    font-size: clamp(0.6rem, 2.5vw, 0.85rem);
-    color: rgba(255,255,255,0.45);
-    letter-spacing: 0.28em;
-    text-transform: uppercase;
-    margin-top: 5px;
-  }
+/* ── Header ── */
+.header { text-align: center; }
+.header-brand {
+  font-family: 'Orbitron', Arial, sans-serif;
+  font-size: clamp(1.1rem, 4.5vw, 2rem);
+  font-weight: 900; color: var(--white);
+  letter-spacing: .12em; text-transform: uppercase; line-height: 1;
+}
+.header-brand span { color: var(--red); }
+.header-sub {
+  font-size: clamp(.6rem, 2.2vw, .82rem);
+  color: rgba(255,255,255,.42);
+  letter-spacing: .28em; text-transform: uppercase; margin-top: 5px;
+}
 
-  /* ── Wheel scene ──
-     Size = min(85vw, 85vh - header - gap, 480px)
-     We compute this entirely in CSS so it stays square on every viewport. */
-  .wheel-scene {
-    position: relative;
-    /* never wider than viewport, never taller than remaining screen */
-    width:  min(85vw, 60vh, 480px);
-    height: min(85vw, 60vh, 480px);
-    flex-shrink: 0;
-  }
+/* ── Wheel scene — strictly square, centred ── */
+.wheel-scene {
+  position: relative;
+  /* never larger than the smaller viewport dimension minus header space */
+  width:  min(80vw, 62vh, 460px);
+  height: min(80vw, 62vh, 460px);
+  flex-shrink: 0;
+}
 
-  /* Outer glow ring */
-  .wheel-glow {
-    position: absolute; inset: -10px;
-    border-radius: 50%;
-    background: conic-gradient(
-      var(--brand-red) 0deg,  #ff4455 30deg,  var(--brand-red) 60deg,
-      #cc0011 90deg,  var(--brand-red) 120deg, #ff4455 150deg,
-      var(--brand-red) 180deg,#cc0011 210deg,  var(--brand-red) 240deg,
-      #ff4455 270deg, var(--brand-red) 300deg, #cc0011 330deg, var(--brand-red) 360deg
-    );
-    filter: blur(14px);
-    opacity: 0.5;
-    animation: ringPulse 10s ease-in-out infinite;
-  }
-  @keyframes ringPulse { 0%,100%{opacity:0.4;} 50%{opacity:0.75;} }
+/* Glow ring behind wheel */
+.wheel-glow {
+  position: absolute; inset: -10px; border-radius: 50%;
+  background: conic-gradient(
+    var(--red) 0deg,#ff4455 30deg,var(--red) 60deg,
+    #cc0011 90deg,var(--red) 120deg,#ff4455 150deg,
+    var(--red) 180deg,#cc0011 210deg,var(--red) 240deg,
+    #ff4455 270deg,var(--red) 300deg,#cc0011 330deg,var(--red) 360deg
+  );
+  filter: blur(14px); opacity: .5;
+  animation: pulse 2s ease-in-out infinite;
+}
+@keyframes pulse { 0%,100%{opacity:.38;} 50%{opacity:.72;} }
 
-  /* Canvas wrapper */
-  .wheel-svg-wrap {
-    position: absolute; inset: 0;
-    border-radius: 50%;
-    box-shadow: 0 0 36px rgba(227,6,19,0.3), 0 0 70px rgba(0,0,0,0.55);
-  }
-  #wheelCanvas {
-    display: block;
-    width: 100%; height: 100%;
-    border-radius: 50%;
-    /* no CSS transform — rotation is pure canvas */
-    touch-action: none; /* prevent scroll interference on touch */
-  }
+/* Canvas wrapper */
+.wheel-wrap {
+  position: absolute; inset: 0; border-radius: 50%;
+  box-shadow: 0 0 36px rgba(227,6,19,.28), 0 0 70px rgba(0,0,0,.55);
+}
+#wheelCanvas {
+  display: block; width: 100%; height: 100%;
+  border-radius: 50%; touch-action: none;
+}
 
-  /* Pointer arrow */
-  .pointer {
-    position: absolute;
-    top: -16px; left: 50%;
-    transform: translateX(-50%);
-    width: 0; height: 0;
-    border-left:  14px solid transparent;
-    border-right: 14px solid transparent;
-    border-top:   30px solid var(--brand-red);
-    filter: drop-shadow(0 0 7px var(--brand-red));
-    z-index: 20;
-  }
-  .pointer::after {
-    content: '';
-    position: absolute;
-    top: -30px; left: -9px;
-    width: 18px; height: 18px;
-    background: var(--brand-red);
-    border-radius: 50%;
-    box-shadow: 0 0 10px var(--brand-red), 0 0 22px var(--brand-red);
-  }
+/* Pointer */
+.pointer {
+  position: absolute; top: -14px; left: 50%; transform: translateX(-50%);
+  width: 0; height: 0; z-index: 20;
+  border-left: 13px solid transparent;
+  border-right: 13px solid transparent;
+  border-top: 28px solid var(--red);
+  filter: drop-shadow(0 0 7px var(--red));
+}
+.pointer::after {
+  content: ''; position: absolute; top: -28px; left: -8px;
+  width: 16px; height: 16px; border-radius: 50%;
+  background: var(--red);
+  box-shadow: 0 0 10px var(--red), 0 0 22px var(--red);
+}
 
-  /* Center spin button */
-  .center-btn {
-    position: absolute;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    /* size relative to wheel */
-    width:  20%;
-    height: 20%;
-    min-width:  64px;
-    min-height: 64px;
-    max-width:  110px;
-    max-height: 110px;
-    border-radius: 50%;
-    border: 3px solid rgba(255,255,255,0.2);
-    background: radial-gradient(circle, #1a1a2e 0%, #0d0d18 70%);
-    box-shadow:
-      0 0 0 5px rgba(227,6,19,0.2),
-      0 0 28px rgba(0,0,0,0.8),
-      inset 0 2px 4px rgba(255,255,255,0.1);
-    cursor: pointer;
-    z-index: 30;
-    display: flex; align-items: center; justify-content: center; flex-direction: column;
-    gap: 1px;
-    /* smooth press on touch */
-    transition: box-shadow 0.2s, transform 0.15s;
-    -webkit-appearance: none;
-    appearance: none;
-    user-select: none;
-    -webkit-user-select: none;
-  }
-  .center-btn:hover {
-    box-shadow:
-      0 0 0 5px rgba(227,6,19,0.5),
-      0 0 36px rgba(227,6,19,0.4),
-      inset 0 2px 4px rgba(255,255,255,0.1);
-    transform: translate(-50%, -50%) scale(1.07);
-  }
-  .center-btn:active { transform: translate(-50%, -50%) scale(0.96); }
-  .center-btn:disabled { cursor: default; opacity: 0.8; }
+/* Spinning border ring */
+.spin-ring {
+  position: absolute; inset: -5px; border-radius: 50%;
+  border: 3px solid transparent;
+  border-top-color: var(--red);
+  border-right-color: rgba(227,6,19,.22);
+  pointer-events: none; z-index: 25;
+}
+.spin-ring.active { animation: ringTurn .55s linear infinite; }
+@keyframes ringTurn { to { transform: rotate(360deg); } }
 
-  .logo-b {
-    font-family: 'Orbitron', Arial, sans-serif;
-    font-size: clamp(18px, 4vw, 28px);
-    font-weight: 900;
-    color: var(--brand-white);
-    line-height: 1;
-    text-shadow: 0 0 10px rgba(227,6,19,0.8);
-  }
-  .logo-mobile {
-    font-size: clamp(5px, 1.2vw, 8px);
-    color: var(--brand-red);
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    font-weight: 700;
-    font-family: 'Exo 2', Arial, sans-serif;
-  }
-  .spin-hint {
-    font-size: clamp(4px, 1vw, 6px);
-    color: rgba(255,255,255,0.38);
-    letter-spacing: 0.08em;
-    font-family: 'Exo 2', Arial, sans-serif;
-  }
+/* Centre button */
+.center-btn {
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 20%; height: 20%;
+  min-width: 62px; min-height: 62px;
+  max-width: 108px; max-height: 108px;
+  border-radius: 50%;
+  border: 3px solid rgba(255,255,255,.2);
+  background: radial-gradient(circle, #1a1a2e 0%, #0d0d18 70%);
+  box-shadow: 0 0 0 5px rgba(227,6,19,.2), 0 0 28px rgba(0,0,0,.8),
+              inset 0 2px 4px rgba(255,255,255,.1);
+  cursor: pointer; z-index: 30;
+  display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 1px;
+  transition: box-shadow .2s, transform .15s;
+  -webkit-appearance: none; appearance: none;
+  user-select: none; -webkit-user-select: none;
+}
+.center-btn:hover {
+  box-shadow: 0 0 0 5px rgba(227,6,19,.5), 0 0 36px rgba(227,6,19,.4),
+              inset 0 2px 4px rgba(255,255,255,.1);
+  transform: translate(-50%,-50%) scale(1.07);
+}
+.center-btn:active  { transform: translate(-50%,-50%) scale(.96); }
+.center-btn:disabled{ cursor: default; opacity: .8; }
 
-  /* Spinning border ring */
-  .spinning-ring {
-    position: absolute; inset: -5px;
-    border-radius: 50%;
-    border: 3px solid transparent;
-    border-top-color: var(--brand-red);
-    border-right-color: rgba(227,6,19,0.25);
-    pointer-events: none; z-index: 25;
-  }
-  .spinning-ring.active { animation: ringRotate 0.55s linear infinite; }
-  @keyframes ringRotate { to { transform: rotate(360deg); } }
+.logo-b {
+  font-family: 'Orbitron', Arial, sans-serif;
+  font-size: clamp(16px,4vw,26px); font-weight: 900; color: var(--white);
+  text-shadow: 0 0 10px rgba(227,6,19,.8); line-height: 1;
+}
+.logo-sub  { font-size: clamp(5px,1.2vw,7px); color: var(--red); letter-spacing:.18em; text-transform:uppercase; font-weight:700; }
+.logo-hint { font-size: clamp(4px,1vw,6px); color: rgba(255,255,255,.36); letter-spacing:.08em; }
 
-  /* ── Result overlay ── */
-  .result-overlay {
-    position: fixed; inset: 0; z-index: 100;
-    display: flex; align-items: center; justify-content: center;
-    padding: 16px;
-    /* fallback for browsers that don't support backdrop-filter */
-    background: rgba(0,0,0,0.72);
-    /* progressive enhancement */
-    -webkit-backdrop-filter: blur(6px);
-    backdrop-filter: blur(6px);
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.35s ease;
-  }
-  .result-overlay.show { opacity: 1; pointer-events: all; }
+/* ── Result overlay ── */
+.overlay {
+  position: fixed; inset: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: center;
+  padding: 16px;
+  background: rgba(0,0,0,.72);
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  opacity: 0; pointer-events: none;
+  transition: opacity .35s ease;
+}
+.overlay.show { opacity: 1; pointer-events: all; }
 
-  .result-card {
-    background: linear-gradient(135deg, #14141f 0%, #1e1e2e 100%);
-    border: 1px solid rgba(227,6,19,0.4);
-    border-radius: 20px;
-    padding: clamp(24px, 6vw, 48px) clamp(28px, 8vw, 64px);
-    text-align: center;
-    position: relative;
-    width: 100%;
-    max-width: min(90vw, 440px);
-    box-shadow: 0 0 60px rgba(227,6,19,0.28), 0 24px 70px rgba(0,0,0,0.65);
-    transform: scale(0.72);
-    transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
-  }
-  .result-overlay.show .result-card { transform: scale(1); }
+.result-card {
+  background: linear-gradient(135deg,#14141f 0%,#1e1e2e 100%);
+  border: 1px solid rgba(227,6,19,.4); border-radius: 20px;
+  padding: clamp(22px,6vw,46px) clamp(26px,8vw,60px);
+  text-align: center; position: relative;
+  width: 100%; max-width: min(90vw, 420px);
+  box-shadow: 0 0 60px rgba(227,6,19,.26), 0 24px 70px rgba(0,0,0,.65);
+  transform: scale(.72);
+  transition: transform .45s cubic-bezier(.34,1.56,.64,1);
+}
+.overlay.show .result-card { transform: scale(1); }
 
-  /* Corner accents */
-  .result-card::before, .result-card::after {
-    content: ''; position: absolute;
-    width: 36px; height: 36px;
-    border-color: var(--brand-red); border-style: solid;
-  }
-  .result-card::before { top: 10px; left: 10px; border-width: 2px 0 0 2px; border-radius: 4px 0 0 0; }
-  .result-card::after  { bottom: 10px; right: 10px; border-width: 0 2px 2px 0; border-radius: 0 0 4px 0; }
+.result-card::before, .result-card::after {
+  content:''; position:absolute; width:34px; height:34px;
+  border-color:var(--red); border-style:solid;
+}
+.result-card::before { top:10px; left:10px; border-width:2px 0 0 2px; border-radius:4px 0 0 0; }
+.result-card::after  { bottom:10px; right:10px; border-width:0 2px 2px 0; border-radius:0 0 4px 0; }
 
-  .result-emoji { font-size: clamp(2.2rem, 10vw, 3.8rem); display: block; margin-bottom: 10px; line-height: 1; }
-  .result-label {
-    font-size: clamp(0.6rem, 2.5vw, 0.78rem);
-    color: rgba(255,255,255,0.48);
-    letter-spacing: 0.32em;
-    text-transform: uppercase;
-    margin-bottom: 8px;
-    font-family: 'Exo 2', Arial, sans-serif;
-  }
-  .result-prize {
-    font-family: 'Orbitron', Arial, sans-serif;
-    font-size: clamp(1.2rem, 6vw, 2.4rem);
-    font-weight: 900;
-    color: var(--brand-white);
-    margin-bottom: 8px;
-    /* animation keeps running even on older Safari */
-    animation: prizeGlow 1.5s ease-in-out infinite alternate;
-    word-break: break-word;
-  }
-  @keyframes prizeGlow {
-    from { text-shadow: 0 0 10px var(--brand-gold), 0 0 20px rgba(255,215,0,0.2); }
-    to   { text-shadow: 0 0 28px var(--brand-gold), 0 0 56px rgba(255,215,0,0.45); }
-  }
-  .result-sub {
-    font-size: clamp(0.65rem, 2.5vw, 0.82rem);
-    color: rgba(255,255,255,0.38);
-    margin-bottom: 26px;
-    font-family: 'Exo 2', Arial, sans-serif;
-    line-height: 1.5;
-  }
+.res-emoji { font-size: clamp(2rem,9vw,3.6rem); display:block; margin-bottom:10px; line-height:1; }
+.res-label { font-size:clamp(.58rem,2.2vw,.76rem); color:rgba(255,255,255,.46); letter-spacing:.3em; text-transform:uppercase; margin-bottom:8px; }
+.res-prize {
+  font-family:'Orbitron',Arial,sans-serif;
+  font-size:clamp(1.1rem,5.5vw,2.3rem); font-weight:900; color:var(--white);
+  margin-bottom:8px; word-break:break-word;
+  animation: goldGlow 1.5s ease-in-out infinite alternate;
+}
+@keyframes goldGlow {
+  from { text-shadow: 0 0 10px var(--gold), 0 0 20px rgba(255,215,0,.2); }
+  to   { text-shadow: 0 0 28px var(--gold), 0 0 56px rgba(255,215,0,.45); }
+}
+.res-sub { font-size:clamp(.62rem,2.2vw,.8rem); color:rgba(255,255,255,.36); margin-bottom:24px; line-height:1.5; }
 
-  .btn-again {
-    background: var(--brand-red);
-    color: #fff;
-    border: none;
-    border-radius: 50px;
-    padding: clamp(11px,3vw,14px) clamp(28px,7vw,40px);
-    font-family: 'Orbitron', Arial, sans-serif;
-    font-weight: 700;
-    font-size: clamp(0.7rem, 2.5vw, 0.88rem);
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    cursor: pointer;
-    box-shadow: 0 4px 18px rgba(227,6,19,0.5);
-    transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
-    -webkit-appearance: none;
-    appearance: none;
-    width: 100%;
-    max-width: 260px;
-    touch-action: manipulation;
-  }
-  .btn-again:hover  { background: #ff1a2a; transform: translateY(-2px); box-shadow: 0 8px 26px rgba(227,6,19,0.65); }
-  .btn-again:active { transform: translateY(0); }
+.btn-again {
+  background: var(--red); color: #fff; border: none; border-radius: 50px;
+  padding: clamp(10px,3vw,13px) clamp(26px,7vw,38px);
+  font-family:'Orbitron',Arial,sans-serif; font-weight:700;
+  font-size:clamp(.68rem,2.4vw,.86rem); letter-spacing:.1em; text-transform:uppercase;
+  cursor:pointer; width:100%; max-width:250px;
+  box-shadow:0 4px 18px rgba(227,6,19,.5);
+  transition:background .2s, transform .15s, box-shadow .2s;
+  -webkit-appearance:none; appearance:none; touch-action:manipulation;
+}
+.btn-again:hover  { background:#ff1a2a; transform:translateY(-2px); box-shadow:0 8px 26px rgba(227,6,19,.65); }
+.btn-again:active { transform:translateY(0); }
 
-  /* ── Confetti ── */
-  .confetti-container { position: fixed; inset: 0; pointer-events: none; z-index: 99; overflow: hidden; }
-  .confetti-piece {
-    position: absolute;
-    opacity: 0;
-    animation: confettiFall linear forwards;
-    border-radius: 2px;
-    will-change: transform, opacity;
-  }
-  @keyframes confettiFall {
-    0%   { transform: translateY(-20px) rotate(0deg) scale(1);   opacity: 1; }
-    80%  { opacity: 1; }
-    100% { transform: translateY(110vh) rotate(720deg) scale(0.4); opacity: 0; }
-  }
+/* ── Confetti container ── */
+#confettiBox {
+  position: fixed; inset: 0;
+  pointer-events: none; z-index: 200; overflow: hidden;
+}
 
-  /* ── Reduced-motion: kill non-essential animations ── */
-  @media (prefers-reduced-motion: reduce) {
-    .bg-grid, .bg-orb, .wheel-glow, .spinning-ring.active { animation: none; }
-    .confetti-piece { display: none; }
-    .result-card, .result-overlay { transition: none; }
-  }
+/* Left-side pieces fall with slight rightward drift */
+@keyframes fallLeft {
+  0%   { transform: translateY(-30px) translateX(0)    rotate(0deg)   scale(1);   opacity: 1; }
+  50%  { transform: translateY(48vh)  translateX(15px) rotate(360deg) scale(.85); opacity: 1; }
+  85%  { opacity: 1; }
+  100% { transform: translateY(108vh) translateX(-8px) rotate(720deg) scale(.4);  opacity: 0; }
+}
 
-  /* ── Landscape phone: shrink wheel so it stays on screen ── */
-  @media (max-height: 500px) and (orientation: landscape) {
-    .game-wrap { flex-direction: row; gap: 16px; align-items: center; justify-content: center; }
-    .wheel-scene { width: min(55vh, 85vw, 340px); height: min(55vh, 85vw, 340px); }
-    .header-sub  { display: none; }
-  }
+/* Right-side pieces fall with slight leftward drift */
+@keyframes fallRight {
+  0%   { transform: translateY(-30px) translateX(0)     rotate(0deg)    scale(1);   opacity: 1; }
+  50%  { transform: translateY(48vh)  translateX(-15px) rotate(-360deg) scale(.85); opacity: 1; }
+  85%  { opacity: 1; }
+  100% { transform: translateY(108vh) translateX(8px)   rotate(-720deg) scale(.4);  opacity: 0; }
+}
+
+/* Sparkle pop */
+@keyframes sparkPop {
+  0%   { transform: scale(0) rotate(0deg);    opacity: 1; }
+  45%  { transform: scale(1.5) rotate(180deg); opacity: 1; }
+  100% { transform: scale(0) rotate(360deg);  opacity: 0; }
+}
+
+.cp { position:absolute; opacity:0; border-radius:2px; will-change:transform,opacity; }
+.cp.L { animation: fallLeft  linear forwards; }
+.cp.R { animation: fallRight linear forwards; }
+.sp { position:absolute; opacity:0; pointer-events:none; line-height:1; animation: sparkPop ease-out forwards; }
+
+/* Landscape phone */
+@media (max-height:500px) and (orientation:landscape) {
+  .game-wrap { flex-direction:row; gap:14px; }
+  .wheel-scene { width:min(52vh,80vw,320px); height:min(52vh,80vw,320px); }
+  .header-sub  { display:none; }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion:reduce) {
+  .bg-grid,.bg-orb,.wheel-glow,.spin-ring.active { animation:none; }
+  .cp,.sp { display:none; }
+  .result-card,.overlay { transition:none; }
+}
 </style>
 </head>
 <body>
@@ -377,6 +304,9 @@
 <div class="bg-grid"></div>
 <div class="bg-orb orb1"></div>
 <div class="bg-orb orb2"></div>
+
+<!-- confetti lives here, above everything -->
+<div id="confettiBox"></div>
 
 <div class="game-wrap">
   <div class="header">
@@ -387,300 +317,288 @@
   <div class="wheel-scene" id="wheelScene">
     <div class="wheel-glow"></div>
     <div class="pointer"></div>
-    <div class="wheel-svg-wrap">
+    <div class="wheel-wrap">
       <canvas id="wheelCanvas"></canvas>
     </div>
-    <div class="spinning-ring" id="spinRing"></div>
+    <div class="spin-ring" id="spinRing"></div>
     <button class="center-btn" id="spinBtn" aria-label="Spin the wheel">
       <span class="logo-b">B</span>
-      <span class="logo-mobile">Mobile</span>
-      <span class="spin-hint">TAP TO SPIN</span>
+      <span class="logo-sub">Mobile</span>
+      <span class="logo-hint">TAP TO SPIN</span>
     </button>
   </div>
 </div>
 
-<!-- Result overlay -->
-<div class="result-overlay" id="resultOverlay" role="dialog" aria-modal="true" aria-live="assertive">
+<!-- Result card -->
+<div class="overlay" id="overlay" role="dialog" aria-modal="true" aria-live="assertive">
   <div class="result-card">
-    <span class="result-emoji" id="resultEmoji">🎉</span>
-    <div class="result-label">You Won</div>
-    <div class="result-prize" id="resultText">Prize Name</div>
-    <div class="result-sub"   id="resultSub">Congratulations!</div>
-    <button class="btn-again" id="spinAgainBtn">Spin Again</button>
+    <span class="res-emoji" id="resEmoji">🎉</span>
+    <div class="res-label">You Won</div>
+    <div class="res-prize" id="resPrize">Prize</div>
+    <div class="res-sub"   id="resSub">Congratulations!</div>
+    <button class="btn-again" id="btnAgain">Spin Again</button>
   </div>
 </div>
-
-<!-- Confetti -->
-<div class="confetti-container" id="confettiContainer"></div>
 
 <script>
 'use strict';
 
-// ── Prize data ──
-const PRIZES = [
-  { label: "Free Data 1GB",   emoji: "📶", sub: "Valid for 7 days. Check SMS for activation.",          color: "#E30613", text: "#fff" },
-  { label: "RM5 Reload",      emoji: "💳", sub: "Credit added to your account within 24 hours.",         color: "#b8000e", text: "#fff" },
-  { label: "Try Again",       emoji: "🔄", sub: "Better luck next spin!",                                color: "#2a2a3e", text: "#ccc" },
-  { label: "Free Call 30min", emoji: "📞", sub: "Valid today only. Calls within network.",               color: "#E30613", text: "#fff" },
-  { label: "RM10 Voucher",    emoji: "🎫", sub: "Redeem at any B Mobile store.",                         color: "#900010", text: "#fff" },
-  { label: "Try Again",       emoji: "🔄", sub: "Better luck next time!",                                color: "#2a2a3e", text: "#ccc" },
-  { label: "Free SMS 100",    emoji: "💬", sub: "100 free SMS, valid for 3 days.",                       color: "#E30613", text: "#fff" },
-  { label: "Grand Prize Draw",emoji: "🏆", sub: "You're entered into our monthly grand draw!",           color: "#FFD700", text: "#111" },
+/* ── Prize data ── */
+var PRIZES = [
+  { label:'Free Data 1GB',    emoji:'📶', sub:'Valid for 7 days. Check SMS for activation.',         color:'#E30613', text:'#fff' },
+  { label:'RM5 Reload',       emoji:'💳', sub:'Credit added to your account within 24 hours.',        color:'#b8000e', text:'#fff' },
+  { label:'Try Again',        emoji:'🔄', sub:'Better luck next spin!',                               color:'#2a2a3e', text:'#ccc' },
+  { label:'Free Call 30min',  emoji:'📞', sub:'Valid today only. Calls within network.',              color:'#E30613', text:'#fff' },
+  { label:'RM10 Voucher',     emoji:'🎫', sub:'Redeem at any B Mobile store.',                        color:'#900010', text:'#fff' },
+  { label:'Try Again',        emoji:'🔄', sub:'Better luck next time!',                               color:'#2a2a3e', text:'#ccc' },
+  { label:'Free SMS 100',     emoji:'💬', sub:'100 free SMS, valid for 3 days.',                      color:'#E30613', text:'#fff' },
+  { label:'Grand Prize Draw', emoji:'🏆', sub:"You're entered into our monthly grand draw!",          color:'#FFD700', text:'#111' },
 ];
 
-const N      = PRIZES.length;
-const canvas = document.getElementById('wheelCanvas');
-const ctx    = canvas.getContext('2d');
-let currentRotation = 0;
-let isSpinning      = false;
-let resizeTimer     = null;
+var N   = PRIZES.length;
+var cvs = document.getElementById('wheelCanvas');
+var ctx = cvs.getContext('2d');
+var rot = 0;          // current rotation in radians
+var spinning = false;
+var resizeTimer = null;
 
-// ── Canvas sizing ──
-// Read the CSS-laid-out size of the scene element, not the canvas CSS attribute.
-function resizeCanvas() {
-  const scene = document.getElementById('wheelScene');
-  const size  = Math.round(scene.getBoundingClientRect().width);
-  if (canvas.width === size && canvas.height === size) return; // no change
-  canvas.width  = size;
-  canvas.height = size;
-  drawWheel(currentRotation);
+/* ── Canvas size: match the CSS-laid-out scene ── */
+function sizeCanvas() {
+  var scene = document.getElementById('wheelScene');
+  var sz = Math.round(scene.getBoundingClientRect().width);
+  if (cvs.width === sz && cvs.height === sz) return;
+  cvs.width = cvs.height = sz;
+  draw(rot);
 }
-
-// Debounced resize so we don't hammer the canvas on every resize event
-function onResize() {
+window.addEventListener('resize', function() {
   clearTimeout(resizeTimer);
-  resizeTimer = setTimeout(resizeCanvas, 80);
-}
+  resizeTimer = setTimeout(sizeCanvas, 80);
+}, { passive:true });
+window.addEventListener('orientationchange', function() { setTimeout(sizeCanvas, 220); });
 
-// ── Draw wheel ──
-function drawWheel(rotation) {
-  const W = canvas.width, H = canvas.height;
-  if (W === 0 || H === 0) return;
-  const cx = W / 2, cy = H / 2, R = W / 2 - 4;
-  const slice = (2 * Math.PI) / N;
+/* ── Draw wheel ── */
+function draw(rotation) {
+  var W = cvs.width, H = cvs.height;
+  if (!W) return;
+  var cx = W/2, cy = H/2, R = W/2 - 4;
+  var slice = (2*Math.PI) / N;
 
   ctx.clearRect(0, 0, W, H);
 
-  // Outer decorative ring
+  /* outer ring */
   ctx.save();
-  ctx.beginPath();
-  ctx.arc(cx, cy, R + 2, 0, 2 * Math.PI);
-  ctx.strokeStyle = 'rgba(227,6,19,0.55)';
-  ctx.lineWidth   = 5;
-  ctx.stroke();
+  ctx.beginPath(); ctx.arc(cx,cy,R+2,0,2*Math.PI);
+  ctx.strokeStyle='rgba(227,6,19,.55)'; ctx.lineWidth=5; ctx.stroke();
   ctx.restore();
 
-  for (let i = 0; i < N; i++) {
-    const start = rotation + i * slice;
-    const end   = start + slice;
-    const prize = PRIZES[i];
+  for (var i = 0; i < N; i++) {
+    var a0 = rotation + i*slice, a1 = a0+slice;
+    var p  = PRIZES[i];
 
-    // Slice fill
-    ctx.beginPath();
-    ctx.moveTo(cx, cy);
-    ctx.arc(cx, cy, R, start, end);
-    ctx.closePath();
-    ctx.fillStyle = prize.color;
-    ctx.fill();
+    /* slice */
+    ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,R,a0,a1); ctx.closePath();
+    ctx.fillStyle = p.color; ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,.14)'; ctx.lineWidth=1.5; ctx.stroke();
 
-    // Slice divider
-    ctx.strokeStyle = 'rgba(255,255,255,0.14)';
-    ctx.lineWidth   = 1.5;
-    ctx.stroke();
+    /* inner accent arc */
+    ctx.beginPath(); ctx.arc(cx,cy,R*.76,a0+.03,a1-.03);
+    ctx.strokeStyle='rgba(255,255,255,.07)'; ctx.lineWidth=7; ctx.stroke();
 
-    // Inner arc accent
-    ctx.beginPath();
-    ctx.arc(cx, cy, R * 0.76, start + 0.03, end - 0.03);
-    ctx.strokeStyle = 'rgba(255,255,255,0.07)';
-    ctx.lineWidth   = 7;
-    ctx.stroke();
-
-    // ── Emoji + label stacked radially, clipped to this slice ──
+    /* emoji + label — clipped to wedge, stacked radially */
     ctx.save();
-    ctx.translate(cx, cy);
-    ctx.rotate(start + slice / 2);
+    ctx.translate(cx,cy); ctx.rotate(a0+slice/2);
 
-    // Clip to wedge
-    ctx.beginPath();
-    ctx.moveTo(0, 0);
-    ctx.arc(0, 0, R - 2, -slice / 2, slice / 2);
-    ctx.closePath();
-    ctx.clip();
+    ctx.beginPath(); ctx.moveTo(0,0); ctx.arc(0,0,R-2,-slice/2,slice/2); ctx.closePath(); ctx.clip();
 
-    const fontSize = Math.max(9,  W * 0.026);
-    const emojSize = Math.max(14, W * 0.044);
-    const lineH    = fontSize * 1.45;
+    var fs = Math.max(9,  W*.026);
+    var es = Math.max(14, W*.044);
+    var lh = fs*1.45;
 
-    ctx.shadowColor  = 'rgba(0,0,0,0.75)';
-    ctx.shadowBlur   = 3;
-    ctx.textAlign    = 'center';
-    ctx.textBaseline = 'middle';
+    ctx.shadowColor='rgba(0,0,0,.75)'; ctx.shadowBlur=3;
+    ctx.textAlign='center'; ctx.textBaseline='middle';
 
-    // Split label into up to 2 lines
-    const words = prize.label.split(' ');
-    const half  = Math.ceil(words.length / 2);
-    const lines = words.length > 1
-      ? [words.slice(0, half).join(' '), words.slice(half).join(' ')]
+    var words = p.label.split(' ');
+    var half  = Math.ceil(words.length/2);
+    var lines = words.length>1
+      ? [words.slice(0,half).join(' '), words.slice(half).join(' ')]
       : [words[0]];
 
-    const gap    = fontSize * 0.55;
-    const blockH = emojSize + gap + lines.length * lineH;
-    const midR   = R * 0.58;
-    const topY   = -(blockH / 2);
+    var gap    = fs*.55;
+    var blockH = es+gap+lines.length*lh;
+    var midR   = R*.58;
+    var topY   = -(blockH/2);
 
-    // Emoji
-    ctx.font = `${emojSize}px serif`;
-    ctx.fillText(prize.emoji, midR, topY + emojSize / 2);
+    ctx.font = es+'px serif';
+    ctx.fillText(p.emoji, midR, topY+es/2);
 
-    // Label lines
-    ctx.font      = `700 ${fontSize}px 'Exo 2', 'Segoe UI', Arial, sans-serif`;
-    ctx.fillStyle = prize.text;
-    const textStartY = topY + emojSize + gap + lineH / 2;
-    lines.forEach((line, li) => {
-      ctx.fillText(line, midR, textStartY + li * lineH);
-    });
+    ctx.font      = '700 '+fs+'px \'Exo 2\',Arial,sans-serif';
+    ctx.fillStyle = p.text;
+    var ty = topY+es+gap+lh/2;
+    for (var l=0; l<lines.length; l++) ctx.fillText(lines[l], midR, ty+l*lh);
 
     ctx.restore();
   }
 
-  // Centre shadow (behind the button)
-  const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, R * 0.14);
-  grad.addColorStop(0, 'rgba(0,0,0,0.82)');
-  grad.addColorStop(1, 'transparent');
-  ctx.beginPath();
-  ctx.arc(cx, cy, R * 0.18, 0, 2 * Math.PI);
-  ctx.fillStyle = grad;
-  ctx.fill();
+  /* centre shadow behind button */
+  var g = ctx.createRadialGradient(cx,cy,0,cx,cy,R*.14);
+  g.addColorStop(0,'rgba(0,0,0,.82)'); g.addColorStop(1,'transparent');
+  ctx.beginPath(); ctx.arc(cx,cy,R*.18,0,2*Math.PI); ctx.fillStyle=g; ctx.fill();
 }
 
-// ── Winner calculation ──
-// Pointer is at the TOP (−π/2). Slice i starts at rotation + i*slice.
-// Slice under pointer: (−rotation − π/2) / slice, floored mod N
-function getWinnerFromRotation(rotation) {
-  const slice = (2 * Math.PI) / N;
-  let angle = ((-rotation - Math.PI / 2) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
-  return Math.floor(angle / slice) % N;
+/* ── Winner from final rotation ── */
+function winner(rotation) {
+  var slice = (2*Math.PI)/N;
+  var a = ((-rotation - Math.PI/2) % (2*Math.PI) + 2*Math.PI) % (2*Math.PI);
+  return Math.floor(a/slice) % N;
 }
 
-// ── Spin ──
+/* ── Spin ── */
 function spin() {
-  if (isSpinning) return;
-  isSpinning = true;
-
-  const btn = document.getElementById('spinBtn');
-  btn.disabled = true;
+  if (spinning) return;
+  spinning = true;
+  document.getElementById('spinBtn').disabled = true;
   document.getElementById('spinRing').classList.add('active');
 
-  const slice     = (2 * Math.PI) / N;
-  const targetIdx = Math.floor(Math.random() * N);
+  var slice  = (2*Math.PI)/N;
+  var target = Math.floor(Math.random()*N);
+  var base   = -Math.PI/2 - target*slice - slice/2;
+  var extra  = (12 + Math.floor(Math.random()*4)) * 2*Math.PI;
+  var delta  = ((base - rot) % (2*Math.PI) + 2*Math.PI) % (2*Math.PI);
+  if (delta < .15) delta += 2*Math.PI;
+  var endRot = rot + delta + extra;
+  var startR = rot;
+  var t0     = null;
+  var DUR    = 10000;
 
-  // Desired final rotation: centre of targetIdx slice under pointer
-  const desiredBase = -Math.PI / 2 - targetIdx * slice - slice / 2;
-  const extraSpins  = (6 + Math.floor(Math.random() * 4)) * 2 * Math.PI; // 6–9 full turns
+  function ease(t) { return 1-Math.pow(1-t,3); }
 
-  let delta = ((desiredBase - currentRotation) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
-  if (delta < 0.15) delta += 2 * Math.PI;
-
-  const finalRotation = currentRotation + delta + extraSpins;
-  const startRot      = currentRotation;
-  const duration      = 4000;
-  let   startTime     = null;
-
-  // Ease-out cubic
-  function easeOut(t) { return 1 - Math.pow(1 - t, 3); }
-
-  function tick(timestamp) {
-    if (!startTime) startTime = timestamp;
-    const elapsed = Math.min(timestamp - startTime, duration);
-    const rot = startRot + (finalRotation - startRot) * easeOut(elapsed / duration);
-    drawWheel(rot);
-
-    if (elapsed < duration) {
-      requestAnimationFrame(tick);
-    } else {
-      currentRotation = finalRotation;
-      const actualWinner = getWinnerFromRotation(currentRotation);
-      onSpinEnd(actualWinner);
+  function tick(ts) {
+    if (!t0) t0 = ts;
+    var el  = Math.min(ts-t0, DUR);
+    var cur = startR + (endRot-startR)*ease(el/DUR);
+    draw(cur);
+    if (el < DUR) { requestAnimationFrame(tick); }
+    else {
+      rot = endRot;
+      var w = winner(rot);
+      spinning = false;
+      document.getElementById('spinRing').classList.remove('active');
+      showResult(w);
     }
   }
   requestAnimationFrame(tick);
 }
 
-// ── Show result ──
-function onSpinEnd(prizeIdx) {
-  isSpinning = false;
-  document.getElementById('spinRing').classList.remove('active');
-
-  const p = PRIZES[prizeIdx];
-  document.getElementById('resultEmoji').textContent = p.emoji;
-  document.getElementById('resultText').textContent  = p.label;
-  document.getElementById('resultSub').textContent   = p.sub;
-
-  setTimeout(() => {
-    document.getElementById('resultOverlay').classList.add('show');
-    if (p.label !== 'Try Again') launchConfetti();
+/* ── Show result ── */
+function showResult(idx) {
+  var p = PRIZES[idx];
+  document.getElementById('resEmoji').textContent = p.emoji;
+  document.getElementById('resPrize').textContent = p.label;
+  document.getElementById('resSub').textContent   = p.sub;
+  setTimeout(function() {
+    document.getElementById('overlay').classList.add('show');
+    if (p.label !== 'Try Again') confetti();
   }, 320);
 }
 
-// ── Confetti ──
-function launchConfetti() {
-  // Skip if user prefers reduced motion
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-
-  const container = document.getElementById('confettiContainer');
-  container.innerHTML = '';
-  const colors = ['#E30613','#FFD700','#ffffff','#ff6b6b','#ffd166','#06d6a0'];
-  const shapes = ['square','circle','rectangle'];
-  const frag   = document.createDocumentFragment();
-
-  for (let i = 0; i < 110; i++) {
-    const el    = document.createElement('div');
-    el.className = 'confetti-piece';
-    const color = colors[Math.floor(Math.random() * colors.length)];
-    const shape = shapes[Math.floor(Math.random() * shapes.length)];
-    const size  = 6 + Math.random() * 10;
-    el.style.cssText = [
-      `left:${Math.random() * 100}%`,
-      `width:${shape === 'rectangle' ? size * 0.5 : size}px`,
-      `height:${size}px`,
-      `background:${color}`,
-      `border-radius:${shape === 'circle' ? '50%' : '2px'}`,
-      `animation-duration:${2.4 + Math.random() * 2.2}s`,
-      `animation-delay:${Math.random() * 0.9}s`,
-    ].join(';');
-    frag.appendChild(el);
-  }
-  container.appendChild(frag);
-  setTimeout(() => { container.innerHTML = ''; }, 5500);
-}
-
-// ── Close / reset ──
 function closeResult() {
-  document.getElementById('resultOverlay').classList.remove('show');
-  const btn = document.getElementById('spinBtn');
-  btn.disabled = false;
+  document.getElementById('overlay').classList.remove('show');
+  document.getElementById('spinBtn').disabled = false;
 }
 
+/* ── Confetti — left & right streams ── */
+function confetti() {
+  if (window.matchMedia('(prefers-reduced-motion:reduce)').matches) return;
+
+  var box      = document.getElementById('confettiBox');
+  box.innerHTML = '';
+
+  var colors   = ['#E30613','#FFD700','#fff','#ff6b6b','#ffd166','#ff4444','#FFD700','#E30613'];
+  var sparkles = ['🎊','✨','⭐','💫','🌟','🎉'];
+
+  /* Define left zone and right zone explicitly */
+  var zones = [
+    { cls:'L', lo:2,  hi:15 },   /* LEFT  side */
+    { cls:'R', lo:85, hi:98 },   /* RIGHT side */
+  ];
+
+  /* Process each zone in its own loop — no shared variables */
+  /* --- LEFT zone --- */
+  (function() {
+    var lo=2, hi=15, cls='L';
+    for (var i=0; i<65; i++) {
+      var el = document.createElement('div');
+      el.className = 'cp '+cls;
+      var sz  = 7+Math.random()*11;
+      var isC = Math.random()<.33;
+      var isR = !isC && Math.random()<.5;
+      el.style.left              = (lo+Math.random()*(hi-lo))+'%';
+      el.style.top               = '0px';
+      el.style.width             = (isR?sz*.45:sz)+'px';
+      el.style.height            = sz+'px';
+      el.style.background        = colors[Math.floor(Math.random()*colors.length)];
+      el.style.borderRadius      = isC?'50%':'2px';
+      el.style.animationDuration = (2.2+Math.random()*2.8)+'s';
+      el.style.animationDelay    = (Math.random()*2.0)+'s';
+      box.appendChild(el);
+    }
+    for (var j=0; j<14; j++) {
+      var sp = document.createElement('div');
+      sp.className   = 'sp';
+      sp.textContent = sparkles[Math.floor(Math.random()*sparkles.length)];
+      sp.style.left              = (lo+Math.random()*(hi-lo))+'%';
+      sp.style.top               = (4+Math.random()*84)+'%';
+      sp.style.fontSize          = (15+Math.random()*16)+'px';
+      sp.style.animationDuration = (.5+Math.random()*.9)+'s';
+      sp.style.animationDelay    = (Math.random()*2.0)+'s';
+      box.appendChild(sp);
+    }
+  })();
+
+  /* --- RIGHT zone --- */
+  (function() {
+    var lo=85, hi=98, cls='R';
+    for (var i=0; i<65; i++) {
+      var el = document.createElement('div');
+      el.className = 'cp '+cls;
+      var sz  = 7+Math.random()*11;
+      var isC = Math.random()<.33;
+      var isR = !isC && Math.random()<.5;
+      el.style.left              = (lo+Math.random()*(hi-lo))+'%';
+      el.style.top               = '0px';
+      el.style.width             = (isR?sz*.45:sz)+'px';
+      el.style.height            = sz+'px';
+      el.style.background        = colors[Math.floor(Math.random()*colors.length)];
+      el.style.borderRadius      = isC?'50%':'2px';
+      el.style.animationDuration = (2.2+Math.random()*2.8)+'s';
+      el.style.animationDelay    = (Math.random()*2.0)+'s';
+      box.appendChild(el);
+    }
+    for (var j=0; j<14; j++) {
+      var sp = document.createElement('div');
+      sp.className   = 'sp';
+      sp.textContent = sparkles[Math.floor(Math.random()*sparkles.length)];
+      sp.style.left              = (lo+Math.random()*(hi-lo))+'%';
+      sp.style.top               = (4+Math.random()*84)+'%';
+      sp.style.fontSize          = (15+Math.random()*16)+'px';
+      sp.style.animationDuration = (.5+Math.random()*.9)+'s';
+      sp.style.animationDelay    = (Math.random()*2.0)+'s';
+      box.appendChild(sp);
+    }
+  })();
+
+  setTimeout(function() { box.innerHTML=''; }, 6500);
+}
+
+/* ── Events ── */
 document.getElementById('spinBtn').addEventListener('click', spin);
-// Touch: prevent ghost click delay on mobile
-document.getElementById('spinBtn').addEventListener('touchend', (e) => { e.preventDefault(); spin(); }, { passive: false });
+document.getElementById('spinBtn').addEventListener('touchend', function(e){ e.preventDefault(); spin(); }, {passive:false});
+document.getElementById('btnAgain').addEventListener('click', closeResult);
+document.getElementById('overlay').addEventListener('click', function(e){ if(e.target===this) closeResult(); });
 
-document.getElementById('spinAgainBtn').addEventListener('click', closeResult);
-document.getElementById('resultOverlay').addEventListener('click', (e) => {
-  if (e.target === document.getElementById('resultOverlay')) closeResult();
-});
-
-// ── Resize handling ──
-window.addEventListener('resize',           onResize, { passive: true });
-window.addEventListener('orientationchange', () => { setTimeout(resizeCanvas, 200); }); // orientation needs a delay
-
-// ── Init ──
-// Wait for fonts if available, then draw
-if (document.fonts && document.fonts.ready) {
-  document.fonts.ready.then(resizeCanvas);
-} else {
-  resizeCanvas();
-}
+/* ── Init ── */
+if (document.fonts && document.fonts.ready) { document.fonts.ready.then(sizeCanvas); }
+else { sizeCanvas(); }
 </script>
 </body>
 </html>
